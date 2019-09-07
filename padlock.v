@@ -145,119 +145,6 @@ Proof.
     reflexivity.
 Qed.
 
-Definition get_digit_at_pos (c : code) (p : position) :=
-  match c with
-  | code_intro d0 d1 d2 => match p with
-    | position_0 => d0
-    | position_1 => d1
-    | position_2 => d2
-    end
-  end.
-
-Theorem get_digit_at_pos_correct :
-  forall c d p,
-    get_digit_at_pos c p = d <-> has_digit c d p.
-Proof.
-  intros.
-  destruct c.
-  split.
-  + intro H.
-    destruct p; simpl in H; subst.
-    - apply has_digit_0.
-    - apply has_digit_1.
-    - apply has_digit_2.
-  + intro H.
-    destruct p;
-      simpl;
-      inversion H;
-      reflexivity.
-Qed.
-
-Definition next_position (p : position) : position :=
-  match p with
-  | position_0 => position_1
-  | position_1 => position_2
-  | position_2 => position_0
-  end.
-
-Theorem next_next_position_different :
-  forall p,
-    three_different_positions p (next_position p) (next_position (next_position p)).
-Proof.
-  intros p.
-  apply three_different_positions_intro;
-    destruct p;
-    simpl;
-    intros H;
-    inversion H.
-Qed.
-
-Definition digit_eq_bool (d0 d1 : digit) : bool :=
-  match d0, d1 with
-  | digit_0, digit_0 => true
-  | digit_1, digit_1 => true
-  | digit_2, digit_2 => true
-  | digit_3, digit_3 => true
-  | digit_4, digit_4 => true
-  | digit_5, digit_5 => true
-  | digit_6, digit_6 => true
-  | digit_7, digit_7 => true
-  | digit_8, digit_8 => true
-  | digit_9, digit_9 => true
-  | _, _ => false
-  end.
-
-Theorem digit_eq_bool_correct :
-  forall d0 d1,
-    d0 = d1 <-> digit_eq_bool d0 d1 = true.
-Proof.
-  split.
-  - intro H.
-    subst.
-    destruct d1;
-      reflexivity.
-  - intro H.
-    destruct d0, d1;
-      try reflexivity;
-      try inversion H.
-Qed.
-
-Theorem digit_eq_bool_reflexive :
-  forall d, digit_eq_bool d d = true.
-Proof.
-  intro d.
-  apply digit_eq_bool_correct.
-  reflexivity.
-Qed.
-
-Definition match_at_position_bool (c0 c1 : code) (p : position) : bool :=
-  digit_eq_bool (get_digit_at_pos c0 p) (get_digit_at_pos c1 p).
-
-Theorem match_at_position_bool_correct :
-  forall c0 c1 p,
-    match_at_position c0 c1 p <-> match_at_position_bool c0 c1 p = true.
-Proof.
-  intros c0 c1 p.
-  unfold match_at_position_bool.
-  split.
-  - intro H.
-    apply digit_eq_bool_correct.
-    inversion H; subst.
-    apply get_digit_at_pos_correct in H0.
-    apply get_digit_at_pos_correct in H1.
-    rewrite H0.
-    rewrite H1.
-    reflexivity.
-  - intro H.
-    apply digit_eq_bool_correct in H.
-    apply match_at_position_intro with (get_digit_at_pos c0 p).
-    + apply get_digit_at_pos_correct.
-      reflexivity.
-    + apply get_digit_at_pos_correct.
-      rewrite H.
-      reflexivity.
-Qed.
-
 Theorem three_different_as_all_pos (pr : position -> Prop) :
   forall p0 p1 p2,
     three_different_positions p0 p1 p2 ->
@@ -294,127 +181,6 @@ Proof.
     try (exfalso; auto).
 Qed.
 
-Definition invalid_digit_at_position_bool (c0 c1 : code) (p : position) : bool :=
-  negb (digit_eq_bool (get_digit_at_pos c0 p) (get_digit_at_pos c1 p))
-  && negb (digit_eq_bool (get_digit_at_pos c0 p) (get_digit_at_pos c1 (next_position p)))
-  && negb (digit_eq_bool (get_digit_at_pos c0 p) (get_digit_at_pos c1 (next_position (next_position p)))).
-
-Theorem invalid_digit_at_position_bool_correct :
-  forall c0 c1 p,
-    invalid_digit_at_position c0 c1 p <-> invalid_digit_at_position_bool c0 c1 p = true.
-Proof.
-  intros.
-  split.
-  - intro H.
-    unfold invalid_digit_at_position_bool.
-    inversion H; subst.
-    apply get_digit_at_pos_correct in H0.
-    rewrite H0.
-    assert (forall pp, digit_eq_bool d (get_digit_at_pos c1 pp) = false) as Hpb.
-    { intro pp.
-      apply not_true_is_false.
-      intro Hinv.
-      apply H1 with pp.
-      apply digit_eq_bool_correct in Hinv.
-      apply get_digit_at_pos_correct.
-      rewrite <- Hinv.
-      reflexivity. }
-    rewrite (Hpb p).
-    rewrite (Hpb (next_position p)).
-    rewrite (Hpb (next_position (next_position p))).
-    reflexivity.
-  - intro.
-    apply invalid_digit_at_position_intro with (get_digit_at_pos c0 p).
-    + apply get_digit_at_pos_correct.
-      reflexivity.
-    + apply three_different_as_all_pos with p (next_position p) (next_position (next_position p));
-        try (
-          unfold invalid_digit_at_position_bool in H;
-          intro Hinv;
-          apply get_digit_at_pos_correct in Hinv;
-          rewrite Hinv in H;
-          rewrite digit_eq_bool_reflexive in H;
-          simpl in H;
-          repeat rewrite andb_false_r in H;
-          inversion H).
-      * apply next_next_position_different.
-Qed.
-
-Definition wrong_position_bool (c0 c1 : code) (p : position) : bool :=
-  negb (match_at_position_bool c0 c1 p)
-  && (
-    (digit_eq_bool (get_digit_at_pos c0 p) (get_digit_at_pos c1 (next_position p)))
-    || (digit_eq_bool (get_digit_at_pos c0 p) (get_digit_at_pos c1 (next_position (next_position p))))).
-
-Theorem wrong_position_bool_correct :
-  forall c0 c1 p,
-    wrong_position c0 c1 p <-> wrong_position_bool c0 c1 p = true.
-Proof.
-  intros.
-  split.
-  - intro H.
-    inversion H; subst.
-    apply get_digit_at_pos_correct in H0.
-    apply get_digit_at_pos_correct in H1.
-    unfold wrong_position_bool.
-    unfold match_at_position_bool.
-    rewrite H0.
-    assert (digit_eq_bool d (get_digit_at_pos c1 p) = false) as Hnotmatch.
-    { apply not_true_is_false.
-      intro Hinv.
-      apply digit_eq_bool_correct in Hinv.
-      apply H2.
-      apply get_digit_at_pos_correct.
-      auto. }
-    rewrite Hnotmatch.
-    simpl.
-    assert (pos1 = p \/ pos1 = (next_position p) \/ pos1 = (next_position (next_position p))) as Hpnnp.
-    { apply always_one_of_three.
-      apply next_next_position_different. }
-    destruct Hpnnp; subst.
-    + exfalso.
-      apply H2.
-      apply get_digit_at_pos_correct.
-      apply H1.
-    + destruct H3; subst.
-      * rewrite H1.
-        rewrite digit_eq_bool_reflexive.
-        reflexivity.
-      * rewrite H1.
-        rewrite digit_eq_bool_reflexive.
-        apply orb_true_r.
-  - intro H.
-    unfold wrong_position_bool in H.
-    apply andb_prop in H.
-    destruct H.
-    apply orb_prop in H0.
-    destruct H0.
-    + apply wrong_position_intro with (get_digit_at_pos c0 p) (next_position p).
-      * apply get_digit_at_pos_correct.
-        reflexivity.
-      * apply get_digit_at_pos_correct.
-        apply digit_eq_bool_correct in H0.
-        auto.
-      * intro Hinv.
-        apply get_digit_at_pos_correct in Hinv.
-        unfold match_at_position_bool in H.
-        rewrite Hinv in H.
-        rewrite digit_eq_bool_reflexive in H.
-        inversion H.
-    + apply wrong_position_intro with (get_digit_at_pos c0 p) (next_position (next_position p)).
-      * apply get_digit_at_pos_correct.
-        reflexivity.
-      * apply get_digit_at_pos_correct.
-        apply digit_eq_bool_correct in H0.
-        auto.
-      * intro Hinv.
-        apply get_digit_at_pos_correct in Hinv.
-        unfold match_at_position_bool in H.
-        rewrite Hinv in H.
-        rewrite digit_eq_bool_reflexive in H.
-        inversion H.
-Qed.
-
 Theorem code_012_condition_0 :
   condition_0 (code_intro digit_0 digit_1 digit_2).
 Proof.
@@ -422,12 +188,21 @@ Proof.
   - apply three_different_positions_intro;
     intro H;
     inversion H.
-  - apply match_at_position_bool_correct.
-    reflexivity.
-  - apply invalid_digit_at_position_bool_correct.
-    reflexivity.
-  - apply invalid_digit_at_position_bool_correct.
-    reflexivity.
+  - apply match_at_position_intro with digit_2.
+    apply has_digit_2.
+    apply has_digit_2.
+  - apply invalid_digit_at_position_intro with digit_6.
+    * apply has_digit_0.
+    * intros pos1.
+      destruct pos1;
+        intro Hinv;
+        inversion Hinv.
+  - apply invalid_digit_at_position_intro with digit_8.
+    * apply has_digit_1.
+    * intros pos1.
+      destruct pos1;
+        intro Hinv;
+        inversion Hinv.
 Qed.
 
 Theorem code_012_condition_1 :
@@ -435,10 +210,17 @@ Theorem code_012_condition_1 :
 Proof.
   intro H.
   inversion H; subst.
-  apply wrong_position_bool_correct in H1.
-  destruct p0;
-    simpl in H1;
-    inversion H1.
+  destruct p0.
+  - inversion H1; subst.
+    inversion H4; subst.
+    inversion H5.
+  - inversion H1; subst.
+    inversion H4; subst.
+    apply H6.
+    apply has_digit_1.
+  - inversion H1; subst.
+    inversion H4; subst.
+    inversion H5.
 Qed.
 
 Theorem code_012_is_not_valid :

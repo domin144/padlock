@@ -453,3 +453,91 @@ Proof.
   inversion Hd2; subst.
   reflexivity.
 Qed.
+
+Theorem code_042_is_valid :
+  valid_code code_042.
+Proof.
+  apply valid_code_intro.
+  - apply condition_0_intro with position_2 position_0 position_1.
+    + apply three_different_positions_intro;
+      intro H;
+      inversion H.
+    + apply match_at_position_intro with digit_2.
+      * apply has_digit_2.
+      * apply has_digit_2.
+    + apply invalid_digit_at_position_intro with digit_6.
+      * apply has_digit_0.
+      * intros p H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_8.
+      * apply has_digit_1.
+      * intros p H.
+        inversion H.
+  - apply condition_1_intro with position_2 position_0 position_1.
+    + apply three_different_positions_intro;
+      intro H;
+      inversion H.
+    + apply wrong_position_intro with digit_4 position_1.
+      * apply has_digit_2.
+      * apply has_digit_1.
+      * intro H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_6.
+      * apply has_digit_0.
+      * intros pos1 H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_1.
+      * apply has_digit_1.
+      * intros pos1 H.
+        inversion H.
+  - apply condition_2_intro with position_0 position_1 position_2.
+    + apply three_different_positions_intro;
+      intro H;
+      inversion H.
+    + apply wrong_position_intro with digit_2 position_2.
+      * apply has_digit_0.
+      * apply has_digit_2.
+      * intros H.
+        inversion H.
+    + apply wrong_position_intro with digit_0 position_0.
+      * apply has_digit_1.
+      * apply has_digit_0.
+      * intro H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_6.
+      * apply has_digit_2.
+      * intros pos1 H.
+        inversion H.
+  - apply condition_3_intro.
+    intros.
+    destruct pos.
+    + apply invalid_digit_at_position_intro with digit_7.
+      * apply has_digit_0.
+      * intros pos1 H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_3.
+      * apply has_digit_1.
+      * intros pos1 H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_8.
+      * apply has_digit_2.
+      * intros pos1 H.
+        inversion H.
+  - apply condition_4_intro with position_2 position_0 position_1.
+    + apply three_different_positions_intro;
+      intro H;
+      inversion H.
+    + apply wrong_position_intro with digit_0 position_0.
+      * apply has_digit_2.
+      * apply has_digit_0.
+      * intros H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_8.
+      * apply has_digit_0.
+      * intros pos1 H.
+        inversion H.
+    + apply invalid_digit_at_position_intro with digit_7.
+      * apply has_digit_1.
+      * intros pos1 H.
+        inversion H.
+Qed.

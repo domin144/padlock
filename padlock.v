@@ -59,72 +59,6 @@ Inductive three_different_positions : position -> position -> position -> Prop :
     forall p0 p1 p2,
       p0 <> p1 -> p0 <> p2 -> p1 <> p2 -> three_different_positions p0 p1 p2.
 
-Definition code_682 :=
-  code_intro digit_6 digit_8 digit_2.
-
-Definition code_614 :=
-  code_intro digit_6 digit_1 digit_4.
-
-Definition code_206 :=
-  code_intro digit_2 digit_0 digit_6.
-
-Definition code_738 :=
-  code_intro digit_7 digit_3 digit_8.
-
-Definition code_870 :=
-  code_intro digit_8 digit_7 digit_0.
-
-Inductive condition_0 : code -> Prop :=
-  | condition_0_intro :
-    forall c p0 p1 p2,
-      three_different_positions p0 p1 p2 ->
-        match_at_position code_682 c p0 ->
-          invalid_digit_at_position code_682 c p1 ->
-            invalid_digit_at_position code_682 c p2 ->
-              condition_0 c.
-
-Inductive condition_1 : code -> Prop :=
-  | condition_1_intro :
-    forall c p0 p1 p2,
-      three_different_positions p0 p1 p2 ->
-        wrong_position code_614 c p0 ->
-          invalid_digit_at_position code_614 c p1 ->
-            invalid_digit_at_position code_614 c p2 ->
-              condition_1 c.
-
-Inductive condition_2 : code -> Prop :=
-  | condition_2_intro :
-    forall c p0 p1 p2,
-      three_different_positions p0 p1 p2 ->
-        wrong_position code_206 c p0 ->
-          wrong_position code_206 c p1 ->
-            invalid_digit_at_position code_206 c p2 ->
-              condition_2 c.
-
-Inductive condition_3 : code -> Prop :=
-  | condition_3_intro :
-    forall c,
-      (forall pos, invalid_digit_at_position code_738 c pos) ->
-        condition_3 c.
-
-Inductive condition_4 : code -> Prop :=
-  | condition_4_intro :
-    forall c p0 p1 p2,
-      three_different_positions p0 p1 p2 ->
-        wrong_position code_870 c p0 ->
-          invalid_digit_at_position code_870 c p1 ->
-            invalid_digit_at_position code_870 c p2 ->
-              condition_4 c.
-
-Inductive valid_code (c : code) : Prop :=
-  | valid_code_intro :
-    condition_0 c ->
-      condition_1 c ->
-        condition_2 c ->
-          condition_3 c ->
-            condition_4 c ->
-              valid_code c.
-
 
 
 
@@ -181,7 +115,107 @@ Proof.
     try (exfalso; auto).
 Qed.
 
-Theorem code_012_condition_0 :
+
+
+
+Section Puzzle.
+
+  Variable secret_code : code.
+
+  Definition code_682 :=
+    code_intro digit_6 digit_8 digit_2.
+
+  Definition code_614 :=
+    code_intro digit_6 digit_1 digit_4.
+
+  Definition code_206 :=
+    code_intro digit_2 digit_0 digit_6.
+
+  Definition code_738 :=
+    code_intro digit_7 digit_3 digit_8.
+
+  Definition code_870 :=
+    code_intro digit_8 digit_7 digit_0.
+
+  Axiom condition_0 :
+    exists p0 p1 p2,
+      three_different_positions p0 p1 p2
+      /\ match_at_position code_682 secret_code p0
+      /\ invalid_digit_at_position code_682 secret_code p1
+      /\ invalid_digit_at_position code_682 secret_code p2.
+
+  Axiom condition_1 :
+    exists p0 p1 p2,
+      three_different_positions p0 p1 p2
+      /\ wrong_position code_614 secret_code p0
+      /\ invalid_digit_at_position code_614 secret_code p1
+      /\ invalid_digit_at_position code_614 secret_code p2.
+
+  Axiom condition_2 :
+    exists c p0 p1 p2,
+      three_different_positions p0 p1 p2
+      /\ wrong_position code_206 c p0
+      /\ wrong_position code_206 c p1
+      /\ invalid_digit_at_position code_206 c p2.
+
+  Axiom condition_3 :
+    forall pos, invalid_digit_at_position code_738 secret_code pos.
+
+  Axiom condition_4 :
+    exists p0 p1 p2,
+      three_different_positions p0 p1 p2
+      /\ wrong_position code_870 secret_code p0
+      /\ invalid_digit_at_position code_870 secret_code p1
+      /\ invalid_digit_at_position code_870 secret_code p2.
+
+  Theorem invalid_8 :
+    forall pos, ~(has_digit secret_code digit_8 pos).
+  Proof.
+    pose (condition_3 position_2) as H3.
+    inversion H3; subst.
+    inversion H; subst.
+    apply H0.
+  Qed.
+
+  Theorem wrong_position_0_at_2 :
+    has_digit secret_code digit_0 position_0 \/ has_digit secret_code digit_0 position_1.
+  Proof.
+    destruct condition_4 as [p0 [p1 [p2 [H_three_diff [H0 [H1 H2]]]]]].
+    assert (p0 = position_2).
+    { destruct p0.
+      - inversion H0; subst.
+        inversion H; subst.
+        exfalso.
+        apply invalid_8 with pos1.
+        auto.
+      - inversion H0; subst.
+        inversion H; subst.
+        pose (condition_3 position_0) as Hc3.
+        inversion Hc3; subst.
+        inversion H5; subst.
+        exfalso.
+        apply H6 with pos1.
+        auto.
+      - reflexivity. }
+    subst.
+    inversion H0; subst.
+    inversion H; subst.
+    destruct pos1.
+    - left.
+      auto.
+    - right.
+      auto.
+    - exfalso.
+      apply H4.
+      auto.
+  Qed.
+
+
+End Puzzle.
+
+
+
+(* Theorem code_012_condition_0 :
   condition_0 (code_intro digit_0 digit_1 digit_2).
 Proof.
   apply condition_0_intro with position_2 position_0 position_1.
@@ -453,3 +487,4 @@ Proof.
   inversion Hd2; subst.
   reflexivity.
 Qed.
+*)
